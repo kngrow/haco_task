@@ -33,5 +33,13 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ]
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDdGOTA5QTBGQTc4OEM3ODkKUldTSng0aW5ENXFRZjN1K1NxbldxOEtBeHZheEp2STNRczlKb1BnWVAzVVJ6eFN1TUptOFVEZjIK",
+      "endpoints": [
+        "https://github.com/kngrow/haco_task/releases/latest/download/latest.json"
+      ]
+    }
   }
 }

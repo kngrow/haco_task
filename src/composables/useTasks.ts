@@ -106,6 +106,29 @@ export function useTasks() {
     }
   }
 
+  async function completeTask(taskId: number) {
+    const db = await getDb();
+    const task = await fetchTaskById(taskId);
+    if (task?.current_status_id) {
+      const existing = await db.select<{ id: number }[]>(
+        "SELECT id FROM task_status_dates WHERE task_id = $1 AND status_id = $2",
+        [taskId, task.current_status_id]
+      );
+      if (existing.length > 0) {
+        await db.execute(
+          "UPDATE task_status_dates SET completed_at = DATE('now') WHERE task_id = $1 AND status_id = $2",
+          [taskId, task.current_status_id]
+        );
+      } else {
+        await db.execute(
+          "INSERT INTO task_status_dates (task_id, status_id, completed_at) VALUES ($1, $2, DATE('now'))",
+          [taskId, task.current_status_id]
+        );
+      }
+    }
+    await db.execute("UPDATE tasks SET is_complete = 1 WHERE id = $1", [taskId]);
+  }
+
   // TaskStatusDates
   async function fetchTaskStatusDates(taskId: number) {
     const db = await getDb();
@@ -174,6 +197,7 @@ export function useTasks() {
     updateTask,
     deleteTask,
     advanceStatus,
+    completeTask,
     fetchTaskStatusDates,
     upsertTaskStatusDate,
     fetchComments,

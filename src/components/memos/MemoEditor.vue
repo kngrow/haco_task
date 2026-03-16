@@ -23,6 +23,7 @@ const title = ref("");
 const content = ref("");
 const mode = ref<"edit" | "preview">("edit");
 const previewEl = ref<HTMLElement | null>(null);
+const textareaEl = ref<HTMLTextAreaElement | null>(null);
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
 watch(
@@ -79,6 +80,109 @@ function scheduleSave() {
       });
     }
   }, 500);
+}
+
+function handleKeyDown(e: KeyboardEvent) {
+  if (e.key !== "Enter" && e.key !== "Tab") return;
+  if (e.key === "Enter" && e.shiftKey) return;
+
+  const textarea = e.target as HTMLTextAreaElement;
+  const { value, selectionStart, selectionEnd } = textarea;
+  if (selectionStart !== selectionEnd) return;
+
+  const lineStart = value.lastIndexOf("\n", selectionStart - 1) + 1;
+  const lineEndRaw = value.indexOf("\n", selectionStart);
+  const lineEnd = lineEndRaw === -1 ? value.length : lineEndRaw;
+  const currentLine = value.substring(lineStart, lineEnd);
+  const trimmed = currentLine.trim();
+
+  // Tab: リストのインデント操作
+  if (e.key === "Tab") {
+    e.preventDefault();
+    const listMatch = currentLine.match(/^(\s*)([-*+]|\d+\.)\s(.*)$/);
+    if (listMatch) {
+      const [, indent] = listMatch;
+      if (!e.shiftKey) {
+        // インデント追加
+        content.value =
+          value.substring(0, lineStart) + "  " + currentLine + value.substring(lineEnd);
+        nextTick(() => {
+          textareaEl.value?.setSelectionRange(selectionStart + 2, selectionStart + 2);
+        });
+      } else {
+        // インデント削除（最大2スペース）
+        const remove = Math.min(2, indent.length);
+        if (remove > 0) {
+          content.value =
+            value.substring(0, lineStart) + currentLine.slice(remove) + value.substring(lineEnd);
+          nextTick(() => {
+            const pos = Math.max(lineStart, selectionStart - remove);
+            textareaEl.value?.setSelectionRange(pos, pos);
+          });
+        }
+      }
+      scheduleSave();
+    } else if (!e.shiftKey) {
+      // リスト以外: スペース2つ挿入（フォーカス移動防止）
+      content.value =
+        value.substring(0, selectionStart) + "  " + value.substring(selectionEnd);
+      nextTick(() => {
+        textareaEl.value?.setSelectionRange(selectionStart + 2, selectionStart + 2);
+      });
+    }
+    return;
+  }
+
+  // テーブル行
+  if (trimmed.startsWith("|") && trimmed.endsWith("|")) {
+    const cells = trimmed.split("|").slice(1, -1);
+    const isSep = cells.every((c) => /^[\s\-:]+$/.test(c));
+    if (!isSep) {
+      e.preventDefault();
+      const cols = Math.max(1, trimmed.split("|").length - 2);
+      const newRow = "|" + Array(cols).fill("  ").join("|") + "|";
+      content.value = value.substring(0, lineEnd) + "\n" + newRow + value.substring(lineEnd);
+      nextTick(() => {
+        if (!textareaEl.value) return;
+        const pos = lineEnd + 2; // \n + |
+        textareaEl.value.setSelectionRange(pos, pos);
+      });
+      scheduleSave();
+      return;
+    }
+  }
+
+  // リスト
+  const listMatch = currentLine.match(/^(\s*)([-*+]|\d+\.)\s(.*)$/);
+  if (listMatch) {
+    const [, indent, marker, itemContent] = listMatch;
+    e.preventDefault();
+
+    if (!itemContent.trim()) {
+      // 空アイテム → リスト終了
+      content.value =
+        value.substring(0, lineStart) + indent + value.substring(lineEnd);
+      nextTick(() => {
+        if (!textareaEl.value) return;
+        const pos = lineStart + indent.length;
+        textareaEl.value.setSelectionRange(pos, pos);
+      });
+    } else {
+      // 次のリストアイテム
+      const numMatch = marker.match(/^(\d+)\./);
+      const nextMarker = numMatch ? `${parseInt(numMatch[1]) + 1}.` : marker;
+      const insertion = "\n" + indent + nextMarker + " ";
+      content.value =
+        value.substring(0, selectionStart) + insertion + value.substring(selectionEnd);
+      nextTick(() => {
+        if (!textareaEl.value) return;
+        const pos = selectionStart + insertion.length;
+        textareaEl.value.setSelectionRange(pos, pos);
+      });
+    }
+    scheduleSave();
+    return;
+  }
 }
 
 function handlePreviewClick(e: MouseEvent) {
@@ -142,11 +246,13 @@ onUnmounted(() => {
 
     <!-- Edit -->
     <textarea
+      ref="textareaEl"
       v-show="mode === 'edit'"
       v-model="content"
       class="flex-1 w-full resize-none p-4 text-sm font-mono bg-white dark:bg-slate-900 outline-none leading-relaxed text-slate-700 dark:text-slate-300 placeholder-slate-400 dark:placeholder-slate-600"
       placeholder="Markdownで入力..."
       @input="scheduleSave"
+      @keydown="handleKeyDown"
     ></textarea>
 
     <!-- Preview -->

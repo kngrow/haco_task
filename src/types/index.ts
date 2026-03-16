@@ -19,6 +19,7 @@ export interface Task {
   title: string;
   description: string | null;
   created_at: string;
+  is_complete: number;
 }
 
 export interface TaskStatusDate {
@@ -40,6 +41,15 @@ export interface TaskComment {
 
 // === Today View ===
 
+export interface StatusHistory {
+  status_id: number;
+  status_name: string;
+  position: number;
+  started_at: string | null;
+  due_date: string | null;
+  completed_at: string | null;
+}
+
 export interface TodayTask {
   id: number;
   title: string;
@@ -50,6 +60,7 @@ export interface TodayTask {
   started_at: string | null;
   current_status_id: number | null;
   next_status_id: number | null;
+  is_complete: number;
 }
 
 // === Memo Types ===
