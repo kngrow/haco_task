@@ -20,7 +20,7 @@ const emit = defineEmits<{
   updated: [];
 }>();
 
-const { advanceStatus, fetchTaskStatusDates, taskStatusDates, deleteTask, fetchTaskById } = useTasks();
+const { advanceStatus, revertStatus, fetchTaskStatusDates, taskStatusDates, deleteTask, fetchTaskById } = useTasks();
 const { statuses, fetchStatuses, taskTypes, fetchTaskTypes } = useTaskTypes();
 const { confirm } = useConfirm();
 
@@ -53,6 +53,13 @@ const nextStatus = computed<Status | null>(() => {
   return sorted.find((s) => s.position > currentPos) ?? null;
 });
 
+const prevStatus = computed<Status | null>(() => {
+  if (!currentStatus.value) return null;
+  const currentPos = currentStatus.value.position;
+  const sorted = [...statuses.value].sort((a, b) => b.position - a.position);
+  return sorted.find((s) => s.position < currentPos) ?? null;
+});
+
 const typeName = computed(() => {
   if (!currentTask.value.task_type_id) return "Inbox";
   const t = taskTypes.value.find((tt) => tt.id === currentTask.value.task_type_id);
@@ -70,6 +77,15 @@ async function handleAdvance() {
   if (updated) {
     currentTask.value = updated;
   }
+  await fetchTaskStatusDates(currentTask.value.id);
+  emit("updated");
+}
+
+async function handleRevert() {
+  if (!prevStatus.value || !currentTask.value.current_status_id) return;
+  await revertStatus(currentTask.value.id, prevStatus.value.id, currentTask.value.current_status_id);
+  const updated = await fetchTaskById(currentTask.value.id);
+  if (updated) currentTask.value = updated;
   await fetchTaskStatusDates(currentTask.value.id);
   emit("updated");
 }
@@ -156,31 +172,46 @@ const renderedDescription = computed(() =>
           ></div>
         </div>
 
-        <!-- Advance status -->
-        <div v-if="nextStatus" class="bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-700 rounded-xl p-4">
-          <div class="flex items-center justify-between gap-3">
-            <div>
-              <p class="text-xs font-medium text-indigo-600 dark:text-indigo-400 uppercase tracking-wide mb-0.5">次のステータス</p>
-              <p class="text-sm font-semibold text-indigo-900 dark:text-indigo-200">{{ nextStatus.name }}</p>
-            </div>
-            <button
-              @click="handleAdvance"
-              class="inline-flex items-center gap-1.5 bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors shrink-0"
-            >
-              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
-              進める
-            </button>
-          </div>
-        </div>
-        <div v-else-if="currentStatus" class="bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl p-3.5">
-          <p class="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
-            <svg class="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        <!-- Advance / Revert status -->
+        <div class="flex gap-2">
+          <!-- 戻す -->
+          <button
+            v-if="prevStatus"
+            @click="handleRevert"
+            class="inline-flex items-center gap-1.5 border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 px-3 py-2 rounded-lg text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors shrink-0"
+          >
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M11 17l-5-5m0 0l5-5m-5 5h12" />
             </svg>
-            最終ステータスです
-          </p>
+            {{ prevStatus.name }} に戻す
+          </button>
+
+          <!-- 進める -->
+          <div v-if="nextStatus" class="flex-1 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-700 rounded-xl p-4">
+            <div class="flex items-center justify-between gap-3">
+              <div>
+                <p class="text-xs font-medium text-indigo-600 dark:text-indigo-400 uppercase tracking-wide mb-0.5">次のステータス</p>
+                <p class="text-sm font-semibold text-indigo-900 dark:text-indigo-200">{{ nextStatus.name }}</p>
+              </div>
+              <button
+                @click="handleAdvance"
+                class="inline-flex items-center gap-1.5 bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors shrink-0"
+              >
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+                進める
+              </button>
+            </div>
+          </div>
+          <div v-else-if="currentStatus" class="flex-1 bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl p-3.5">
+            <p class="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+              <svg class="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              最終ステータスです
+            </p>
+          </div>
         </div>
 
         <!-- Status dates -->

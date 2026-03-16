@@ -68,6 +68,22 @@ export function useTasks() {
     await db.execute("DELETE FROM tasks WHERE id = $1", [id]);
   }
 
+  async function revertStatus(taskId: number, prevStatusId: number, currentStatusId: number) {
+    const db = await getDb();
+    // 現在のステータスの completed_at をクリア
+    await db.execute(
+      "UPDATE task_status_dates SET completed_at = NULL WHERE task_id = $1 AND status_id = $2",
+      [taskId, currentStatusId]
+    );
+    // 戻り先ステータスの completed_at もクリア（再進行中扱い）
+    await db.execute(
+      "UPDATE task_status_dates SET completed_at = NULL WHERE task_id = $1 AND status_id = $2",
+      [taskId, prevStatusId]
+    );
+    // current_status_id を前のステータスに戻す
+    await db.execute("UPDATE tasks SET current_status_id = $1, is_complete = 0 WHERE id = $2", [prevStatusId, taskId]);
+  }
+
   async function advanceStatus(taskId: number, nextStatusId: number, prevStatusId: number | null) {
     const db = await getDb();
     // 前のステータスに完了日を記録
@@ -196,6 +212,7 @@ export function useTasks() {
     createTask,
     updateTask,
     deleteTask,
+    revertStatus,
     advanceStatus,
     completeTask,
     fetchTaskStatusDates,
