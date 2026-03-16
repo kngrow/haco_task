@@ -213,7 +213,7 @@ async function copyReport() {
         </svg>
       </button>
 
-      <div class="ml-auto">
+      <div class="ml-auto flex items-center gap-1">
         <button
           @click="openReportModal"
           class="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
@@ -222,6 +222,15 @@ async function copyReport() {
             <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
           日報
+        </button>
+        <button
+          @click="editingTask = null; showEditModal = true"
+          class="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors bg-indigo-600 hover:bg-indigo-700 text-white"
+        >
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+          タスク追加
         </button>
       </div>
     </div>
