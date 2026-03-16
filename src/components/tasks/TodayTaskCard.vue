@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from "vue";
 import type { TodayTask } from "../../types";
 
 const props = defineProps<{
@@ -13,15 +14,15 @@ const emit = defineEmits<{
   select: [task: TodayTask];
 }>();
 
-const isCompleted = props.task.is_complete === 1;
-const isFinal = !props.task.next_status_id && props.task.current_status_id !== null;
-const canAdvance = !!props.task.next_status_id;
+const isCompleted = computed(() => props.task.is_complete === 1);
+const isFinal = computed(() => !props.task.next_status_id && props.task.current_status_id !== null);
+const canAdvance = computed(() => !!props.task.next_status_id);
 
 function handleCheckClick() {
-  if (isCompleted) return;
-  if (isFinal) {
+  if (isCompleted.value) return;
+  if (isFinal.value) {
     emit("complete", props.task);
-  } else if (canAdvance) {
+  } else if (canAdvance.value) {
     emit("advance", props.task);
   }
 }
