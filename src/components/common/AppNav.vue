@@ -18,7 +18,7 @@ import { RouterLink } from "vue-router";
 
     <!-- Nav items -->
     <ul class="flex-1 px-2 py-2 space-y-0.5">
-      <!-- Today (exact match only) -->
+      <!-- Today -->
       <li>
         <RouterLink v-slot="{ isExactActive, navigate }" to="/" custom>
           <a
@@ -54,26 +54,6 @@ import { RouterLink } from "vue-router";
               <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
             </svg>
             Tasks
-          </a>
-        </RouterLink>
-      </li>
-
-      <!-- Memos -->
-      <li>
-        <RouterLink v-slot="{ isActive, navigate }" to="/memos" custom>
-          <a
-            @click="navigate"
-            :class="[
-              'flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer',
-              isActive
-                ? 'bg-indigo-50 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 font-medium'
-                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100',
-            ]"
-          >
-            <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-            </svg>
-            Memos
           </a>
         </RouterLink>
       </li>
