@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from "vue";
+import { getVersion } from "@tauri-apps/api/app";
 import { useDarkMode } from "../composables/useDarkMode";
 import TaskTypeManager from "../components/settings/TaskTypeManager.vue";
 import StatusManager from "../components/settings/StatusManager.vue";
@@ -7,6 +8,8 @@ import type { TaskType } from "../types";
 
 const { isDark, toggle } = useDarkMode();
 const selectedType = ref<TaskType | null>(null);
+const version = ref("");
+getVersion().then((v) => (version.value = v));
 
 function onSelectType(tt: TaskType) {
   selectedType.value = tt;
@@ -59,5 +62,8 @@ function onSelectType(tt: TaskType) {
         </template>
       </div>
     </div>
+
+    <!-- Version -->
+    <p class="mt-8 text-xs text-slate-400 dark:text-slate-600">v{{ version }}</p>
   </div>
 </template>
