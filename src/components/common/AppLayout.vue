@@ -2,6 +2,7 @@
 import { computed } from "vue";
 import { RouterLink, useRoute } from "vue-router";
 import AppNav from "./AppNav.vue";
+import ConfirmDialog from "./ConfirmDialog.vue";
 
 const route = useRoute();
 const isMemosSection = computed(() => route.path.startsWith("/memos"));
@@ -19,6 +20,8 @@ const isMemosSection = computed(() => route.path.startsWith("/memos"));
         <router-view />
       </main>
     </div>
+
+    <ConfirmDialog />
 
     <!-- Bottom tab bar -->
     <nav class="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 shrink-0">

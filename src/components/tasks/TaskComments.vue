@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from "vue";
 import { useTasks } from "../../composables/useTasks";
+import { useConfirm } from "../../composables/useConfirm";
 import type { TaskComment } from "../../types";
 
 const props = defineProps<{
@@ -8,6 +9,7 @@ const props = defineProps<{
 }>();
 
 const { comments, fetchComments, addComment, deleteComment } = useTasks();
+const { confirm } = useConfirm();
 const newComment = ref("");
 
 onMounted(() => {
@@ -27,7 +29,7 @@ async function handleAdd() {
 }
 
 async function handleDelete(comment: TaskComment) {
-  if (!confirm("このコメントを削除しますか？")) return;
+  if (!(await confirm("このコメントを削除しますか？"))) return;
   await deleteComment(comment.id, props.taskId);
 }
 

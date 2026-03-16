@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { useTaskTypes } from "../../composables/useTaskTypes";
+import { useConfirm } from "../../composables/useConfirm";
 import type { TaskType } from "../../types";
 
 const emit = defineEmits<{
@@ -8,6 +9,7 @@ const emit = defineEmits<{
 }>();
 
 const { taskTypes, fetchTaskTypes, createTaskType, updateTaskType, deleteTaskType } = useTaskTypes();
+const { confirm } = useConfirm();
 
 const newTypeName = ref("");
 const editingId = ref<number | null>(null);
@@ -41,7 +43,7 @@ async function handleUpdate() {
 }
 
 async function handleDelete(tt: TaskType) {
-  if (!confirm(`タスクタイプ「${tt.name}」を削除しますか？関連するステータスも削除されます。`)) return;
+  if (!(await confirm(`タスクタイプ「${tt.name}」を削除しますか？関連するステータスも削除されます。`))) return;
   await deleteTaskType(tt.id);
 }
 </script>

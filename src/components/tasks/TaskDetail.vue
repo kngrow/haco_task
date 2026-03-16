@@ -4,6 +4,7 @@ import MarkdownIt from "markdown-it";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { useTasks } from "../../composables/useTasks";
 import { useTaskTypes } from "../../composables/useTaskTypes";
+import { useConfirm } from "../../composables/useConfirm";
 import TaskComments from "./TaskComments.vue";
 import type { Task, Status } from "../../types";
 
@@ -21,6 +22,7 @@ const emit = defineEmits<{
 
 const { advanceStatus, fetchTaskStatusDates, taskStatusDates, deleteTask, fetchTaskById } = useTasks();
 const { statuses, fetchStatuses, taskTypes, fetchTaskTypes } = useTaskTypes();
+const { confirm } = useConfirm();
 
 const currentTask = ref<Task>({ ...props.task });
 
@@ -73,7 +75,7 @@ async function handleAdvance() {
 }
 
 async function handleDelete() {
-  if (!confirm("このタスクを削除しますか？")) return;
+  if (!(await confirm("このタスクを削除しますか？"))) return;
   await deleteTask(currentTask.value.id);
   emit("updated");
   emit("close");

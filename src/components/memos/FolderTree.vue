@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
 import { useFolders } from "../../composables/useFolders";
+import { useConfirm } from "../../composables/useConfirm";
 import type { Folder } from "../../types";
 
 const emit = defineEmits<{
@@ -8,6 +9,7 @@ const emit = defineEmits<{
 }>();
 
 const { folders, fetchFolders, createFolder, updateFolder, deleteFolder } = useFolders();
+const { confirm } = useConfirm();
 
 const selectedFolderId = ref<number | null>(null);
 const showNewFolderInput = ref(false);
@@ -99,7 +101,7 @@ function cancelEditFolder() {
 }
 
 async function handleDeleteFolder(folderId: number) {
-  if (!confirm("このフォルダを削除しますか？フォルダ内のメモはルートに移動されます。")) return;
+  if (!(await confirm("このフォルダを削除しますか？フォルダ内のメモはルートに移動されます。"))) return;
   await deleteFolder(folderId);
   if (selectedFolderId.value === folderId) {
     selectFolder(null);

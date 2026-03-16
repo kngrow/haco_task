@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
+import { useConfirm } from "../../composables/useConfirm";
 import type { Memo } from "../../types";
 
 const props = defineProps<{
@@ -24,9 +25,11 @@ function formatDate(dateStr: string | null): string {
   return `${year}/${month}/${day} ${hours}:${mins}`;
 }
 
-function handleDelete(e: Event, id: number) {
+const { confirm } = useConfirm();
+
+async function handleDelete(e: Event, id: number) {
   e.stopPropagation();
-  if (confirm("このメモを削除しますか？")) {
+  if (await confirm("このメモを削除しますか？")) {
     emit("delete", id);
   }
 }

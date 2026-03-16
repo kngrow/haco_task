@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from "vue";
 import { useTaskTypes } from "../../composables/useTaskTypes";
+import { useConfirm } from "../../composables/useConfirm";
 import type { TaskType, Status } from "../../types";
 
 const props = defineProps<{
@@ -8,6 +9,7 @@ const props = defineProps<{
 }>();
 
 const { statuses, fetchStatuses, createStatus, updateStatus, deleteStatus } = useTaskTypes();
+const { confirm } = useConfirm();
 
 const newStatusName = ref("");
 const editingId = ref<number | null>(null);
@@ -48,7 +50,7 @@ async function handleUpdate(status: Status) {
 }
 
 async function handleDelete(status: Status) {
-  if (!confirm(`ステータス「${status.name}」を削除しますか？該当タスクはInboxに移動されます。`)) return;
+  if (!(await confirm(`ステータス「${status.name}」を削除しますか？該当タスクはInboxに移動されます。`))) return;
   await deleteStatus(status.id);
   await fetchStatuses(props.taskType.id);
 }
