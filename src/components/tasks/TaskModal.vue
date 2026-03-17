@@ -2,6 +2,7 @@
 import { ref, watch, computed, onMounted } from "vue";
 import { useTasks } from "../../composables/useTasks";
 import { useTaskTypes } from "../../composables/useTaskTypes";
+import { addDays, diffDays, nextBusinessDay } from "../../utils/date";
 import type { Task, Status } from "../../types";
 
 const props = defineProps<{
@@ -58,6 +59,45 @@ watch(selectedTypeId, async (typeId) => {
     statusDates.value = {};
   }
 });
+
+// ステータスをposition順に並べた配列
+const sortedStatuses = computed(() =>
+  [...statuses.value].sort((a, b) => a.position - b.position)
+);
+
+function handleDateChange(
+  statusId: number,
+  field: "started_at" | "due_date",
+  newVal: string,
+  oldVal: string
+) {
+  const idx = sortedStatuses.value.findIndex((s) => s.id === statusId);
+  if (idx === -1) return;
+
+  // 新規入力（oldValが空）の場合
+  if (!oldVal && newVal) {
+    // due_date が新規入力 → 次ステータスの started_at が空なら翌営業日をセット
+    if (field === "due_date" && idx + 1 < sortedStatuses.value.length) {
+      const nextId = sortedStatuses.value[idx + 1].id;
+      if (statusDates.value[nextId] && !statusDates.value[nextId].started_at) {
+        statusDates.value[nextId].started_at = nextBusinessDay(newVal);
+      }
+    }
+    return;
+  }
+
+  // 既存値を変更した場合 → 以降のステータスの日付をまとめてずらす
+  if (oldVal && newVal) {
+    const diff = diffDays(newVal, oldVal);
+    if (diff === 0) return;
+    for (let i = idx + 1; i < sortedStatuses.value.length; i++) {
+      const sd = statusDates.value[sortedStatuses.value[i].id];
+      if (!sd) continue;
+      if (sd.started_at) sd.started_at = addDays(sd.started_at, diff);
+      if (sd.due_date) sd.due_date = addDays(sd.due_date, diff);
+    }
+  }
+}
 
 async function handleSave() {
   const trimmedTitle = title.value.trim();
@@ -168,17 +208,19 @@ async function handleSave() {
                 <div>
                   <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">開始日</label>
                   <input
-                    v-model="statusDates[status.id].started_at"
+                    :value="statusDates[status.id].started_at"
                     type="date"
                     class="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    @change="(e) => { const old = statusDates[status.id].started_at; statusDates[status.id].started_at = (e.target as HTMLInputElement).value; handleDateChange(status.id, 'started_at', (e.target as HTMLInputElement).value, old); }"
                   />
                 </div>
                 <div>
                   <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">期日</label>
                   <input
-                    v-model="statusDates[status.id].due_date"
+                    :value="statusDates[status.id].due_date"
                     type="date"
                     class="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    @change="(e) => { const old = statusDates[status.id].due_date; statusDates[status.id].due_date = (e.target as HTMLInputElement).value; handleDateChange(status.id, 'due_date', (e.target as HTMLInputElement).value, old); }"
                   />
                 </div>
               </div>
