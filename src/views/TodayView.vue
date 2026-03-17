@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import { useTodayTasks } from "../composables/useTodayTasks";
 import { useTasks } from "../composables/useTasks";
 import TodayTaskCard from "../components/tasks/TodayTaskCard.vue";
@@ -28,8 +29,16 @@ function toDateString(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
+const route = useRoute();
+const router = useRouter();
+
 const todayString = toDateString(new Date());
-const selectedDate = ref(todayString);
+const selectedDate = ref((route.query.date as string) || todayString);
+
+// クエリパラメータの変化を反映
+watch(() => route.query.date, (d) => {
+  selectedDate.value = (d as string) || todayString;
+});
 
 const isToday = computed(() => selectedDate.value === todayString);
 
@@ -55,7 +64,11 @@ function nextDay() {
   selectedDate.value = toDateString(d);
 }
 
-watch(selectedDate, (date) => fetchAll(date));
+watch(selectedDate, (date) => {
+  fetchAll(date);
+  if (date === todayString) router.replace("/");
+  else router.replace({ query: { date } });
+});
 
 onMounted(() => fetchAll(selectedDate.value));
 

@@ -3,6 +3,7 @@ import { ref, watch, computed, onMounted } from "vue";
 import { useTasks } from "../../composables/useTasks";
 import { useTaskTypes } from "../../composables/useTaskTypes";
 import { addDays, diffDays, nextBusinessDay } from "../../utils/date";
+import DatePicker from "../common/DatePicker.vue";
 import type { Task, Status } from "../../types";
 
 const props = defineProps<{
@@ -207,20 +208,18 @@ async function handleSave() {
               <div class="grid grid-cols-2 gap-3">
                 <div>
                   <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">開始日</label>
-                  <input
-                    :value="statusDates[status.id].started_at"
-                    type="date"
-                    class="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                    @change="(e) => { const old = statusDates[status.id].started_at; statusDates[status.id].started_at = (e.target as HTMLInputElement).value; handleDateChange(status.id, 'started_at', (e.target as HTMLInputElement).value, old); }"
+                  <DatePicker
+                    :model-value="statusDates[status.id].started_at"
+                    @update:model-value="(v) => { statusDates[status.id].started_at = v; }"
+                    @change="(newVal, oldVal) => handleDateChange(status.id, 'started_at', newVal, oldVal)"
                   />
                 </div>
                 <div>
                   <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">期日</label>
-                  <input
-                    :value="statusDates[status.id].due_date"
-                    type="date"
-                    class="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                    @change="(e) => { const old = statusDates[status.id].due_date; statusDates[status.id].due_date = (e.target as HTMLInputElement).value; handleDateChange(status.id, 'due_date', (e.target as HTMLInputElement).value, old); }"
+                  <DatePicker
+                    :model-value="statusDates[status.id].due_date"
+                    @update:model-value="(v) => { statusDates[status.id].due_date = v; }"
+                    @change="(newVal, oldVal) => handleDateChange(status.id, 'due_date', newVal, oldVal)"
                   />
                 </div>
               </div>
