@@ -143,7 +143,7 @@ function fmtDate(dateStr: string | null): string {
 function fmtDateRange(started: string | null, due: string | null): string {
   const s = fmtDate(started);
   const d = fmtDate(due);
-  if (s && d && s !== d) return `${s}~${d}`;
+  if (s && d && s !== d) return `${s}～${d}`;
   return s || d;
 }
 
