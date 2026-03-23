@@ -113,5 +113,14 @@ function selectDate(date: string) {
         {{ Number(cell.date.split("-")[2]) }}
       </button>
     </div>
+
+    <!-- 今日に戻るボタン -->
+    <button
+      v-if="selectedDate && selectedDate !== today"
+      @click="selectDate(today)"
+      class="mt-1.5 w-full text-[11px] font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 py-1 rounded hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors"
+    >
+      今日に戻る
+    </button>
   </div>
 </template>

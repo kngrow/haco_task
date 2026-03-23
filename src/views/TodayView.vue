@@ -32,15 +32,28 @@ function toDateString(d: Date): string {
 const route = useRoute();
 const router = useRouter();
 
-const todayString = toDateString(new Date());
-const selectedDate = ref((route.query.date as string) || todayString);
+const todayString = ref(toDateString(new Date()));
+const selectedDate = ref((route.query.date as string) || todayString.value);
+
+/** ユーザー操作のタイミングで「今日」を最新化する */
+function refreshToday() {
+  const now = toDateString(new Date());
+  if (now !== todayString.value) {
+    const wasOnToday = selectedDate.value === todayString.value;
+    todayString.value = now;
+    if (wasOnToday) {
+      selectedDate.value = now;
+    }
+  }
+}
 
 // クエリパラメータの変化を反映
 watch(() => route.query.date, (d) => {
-  selectedDate.value = (d as string) || todayString;
+  refreshToday();
+  selectedDate.value = (d as string) || todayString.value;
 });
 
-const isToday = computed(() => selectedDate.value === todayString);
+const isToday = computed(() => selectedDate.value === todayString.value);
 
 const displayDate = computed(() => {
   const d = new Date(selectedDate.value + "T00:00:00");
@@ -53,12 +66,14 @@ const displayDate = computed(() => {
 const periodLabel = computed(() => (isToday.value ? "今日" : displayDate.value));
 
 function prevDay() {
+  refreshToday();
   const d = new Date(selectedDate.value + "T00:00:00");
   d.setDate(d.getDate() - 1);
   selectedDate.value = toDateString(d);
 }
 
 function nextDay() {
+  refreshToday();
   const d = new Date(selectedDate.value + "T00:00:00");
   d.setDate(d.getDate() + 1);
   selectedDate.value = toDateString(d);
@@ -66,7 +81,7 @@ function nextDay() {
 
 watch(selectedDate, (date) => {
   fetchAll(date);
-  if (date === todayString) router.replace("/");
+  if (date === todayString.value) router.replace("/");
   else router.replace({ query: { date } });
 });
 
@@ -207,13 +222,6 @@ async function copyReport() {
           {{ isToday ? "Today" : displayDate }}
         </h1>
         <span v-if="isToday" class="text-sm text-slate-400">{{ displayDate }}</span>
-        <button
-          v-else
-          @click="selectedDate = todayString"
-          class="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 px-2 py-1 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/50 transition-colors"
-        >
-          今日に戻る
-        </button>
       </div>
 
       <button

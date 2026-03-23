@@ -34,7 +34,27 @@ export function useTaskTypes() {
 
   async function deleteTaskType(id: number) {
     const db = await getDb();
-    await db.execute("DELETE FROM task_types WHERE id = $1", [id]);
+    await db.execute("BEGIN TRANSACTION");
+    try {
+      // ステータスに紐づく日付データを削除
+      await db.execute(
+        "DELETE FROM task_status_dates WHERE status_id IN (SELECT id FROM statuses WHERE task_type_id = $1)",
+        [id]
+      );
+      // 該当ステータスを持つタスクをInboxに移動
+      await db.execute(
+        "UPDATE tasks SET current_status_id = NULL WHERE current_status_id IN (SELECT id FROM statuses WHERE task_type_id = $1)",
+        [id]
+      );
+      // 該当タスクタイプのタスクからタイプ参照を外す
+      await db.execute("UPDATE tasks SET task_type_id = NULL WHERE task_type_id = $1", [id]);
+      // ステータス・タスクタイプ削除（CASCADE で statuses も消える）
+      await db.execute("DELETE FROM task_types WHERE id = $1", [id]);
+      await db.execute("COMMIT");
+    } catch (e) {
+      await db.execute("ROLLBACK");
+      throw e;
+    }
     await fetchTaskTypes();
   }
 
@@ -55,9 +75,18 @@ export function useTaskTypes() {
 
   async function deleteStatus(id: number) {
     const db = await getDb();
-    // ステータス削除時、該当タスクをInboxに移動
-    await db.execute("UPDATE tasks SET current_status_id = NULL WHERE current_status_id = $1", [id]);
-    await db.execute("DELETE FROM statuses WHERE id = $1", [id]);
+    await db.execute("BEGIN TRANSACTION");
+    try {
+      // ステータスに紐づく日付データを削除
+      await db.execute("DELETE FROM task_status_dates WHERE status_id = $1", [id]);
+      // 該当タスクをInboxに移動
+      await db.execute("UPDATE tasks SET current_status_id = NULL WHERE current_status_id = $1", [id]);
+      await db.execute("DELETE FROM statuses WHERE id = $1", [id]);
+      await db.execute("COMMIT");
+    } catch (e) {
+      await db.execute("ROLLBACK");
+      throw e;
+    }
   }
 
   return {

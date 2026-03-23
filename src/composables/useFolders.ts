@@ -28,11 +28,18 @@ export function useFolders() {
 
   async function deleteFolder(id: number) {
     const db = await getDb();
-    // フォルダ内のメモをルートに移動
-    await db.execute("UPDATE memos SET folder_id = NULL WHERE folder_id = $1", [id]);
-    // 子フォルダの親をNULLに
-    await db.execute("UPDATE folders SET parent_id = NULL WHERE parent_id = $1", [id]);
-    await db.execute("DELETE FROM folders WHERE id = $1", [id]);
+    await db.execute("BEGIN TRANSACTION");
+    try {
+      // フォルダ内のメモをルートに移動
+      await db.execute("UPDATE memos SET folder_id = NULL WHERE folder_id = $1", [id]);
+      // 子フォルダの親をNULLに
+      await db.execute("UPDATE folders SET parent_id = NULL WHERE parent_id = $1", [id]);
+      await db.execute("DELETE FROM folders WHERE id = $1", [id]);
+      await db.execute("COMMIT");
+    } catch (e) {
+      await db.execute("ROLLBACK");
+      throw e;
+    }
     await fetchFolders();
   }
 
