@@ -11,7 +11,6 @@ import type { TodayTask, Task } from "../types";
 const {
   inProgressTasks,
   dueTodayTasks,
-  startingTodayTasks,
   overdueTasks,
   completedTasks,
   fetchAll,
@@ -181,7 +180,6 @@ async function openReportModal() {
   for (const t of [
     ...inProgressTasks.value,
     ...dueTodayTasks.value,
-    ...startingTodayTasks.value,
     ...overdueTasks.value,
     ...completedTasks.value,
   ]) {
@@ -298,28 +296,6 @@ async function copyReport() {
         />
       </div>
       <p v-else class="text-slate-400 text-sm pl-4">{{ periodLabel }}が期日のタスクはありません</p>
-    </section>
-
-    <!-- 開始日 -->
-    <section class="mb-8">
-      <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
-        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400"></span>
-        {{ periodLabel }}が開始日
-        <span v-if="startingTodayTasks.length > 0" class="text-xs font-medium text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-full">
-          {{ startingTodayTasks.length }}
-        </span>
-      </h2>
-      <div v-if="startingTodayTasks.length > 0" class="space-y-2">
-        <TodayTaskCard
-          v-for="task in startingTodayTasks"
-          :key="task.id"
-          :task="task"
-          @advance="handleAdvance"
-          @complete="handleComplete"
-          @select="handleSelect"
-        />
-      </div>
-      <p v-else class="text-slate-400 text-sm pl-4">{{ periodLabel }}が開始日のタスクはありません</p>
     </section>
 
     <!-- 期日超過 -->

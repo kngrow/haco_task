@@ -20,7 +20,7 @@ const emit = defineEmits<{
   updated: [];
 }>();
 
-const { advanceStatus, revertStatus, fetchTaskStatusDates, taskStatusDates, deleteTask, fetchTaskById } = useTasks();
+const { advanceStatus, revertStatus, completeTask, fetchTaskStatusDates, taskStatusDates, deleteTask, fetchTaskById } = useTasks();
 const { statuses, fetchStatuses, taskTypes, fetchTaskTypes } = useTaskTypes();
 const { confirm } = useConfirm();
 
@@ -84,6 +84,14 @@ async function handleAdvance() {
 async function handleRevert() {
   if (!prevStatus.value || !currentTask.value.current_status_id) return;
   await revertStatus(currentTask.value.id, prevStatus.value.id, currentTask.value.current_status_id);
+  const updated = await fetchTaskById(currentTask.value.id);
+  if (updated) currentTask.value = updated;
+  await fetchTaskStatusDates(currentTask.value.id);
+  emit("updated");
+}
+
+async function handleComplete() {
+  await completeTask(currentTask.value.id);
   const updated = await fetchTaskById(currentTask.value.id);
   if (updated) currentTask.value = updated;
   await fetchTaskStatusDates(currentTask.value.id);
@@ -204,12 +212,29 @@ const renderedDescription = computed(() =>
               </button>
             </div>
           </div>
-          <div v-else-if="currentStatus" class="flex-1 bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl p-3.5">
-            <p class="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+          <div v-else-if="currentStatus && !currentTask.is_complete" class="flex-1 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded-xl p-4">
+            <div class="flex items-center justify-between gap-3">
+              <div>
+                <p class="text-xs font-medium text-emerald-600 dark:text-emerald-400 uppercase tracking-wide mb-0.5">最終ステータス</p>
+                <p class="text-sm font-semibold text-emerald-900 dark:text-emerald-200">タスクを完了にできます</p>
+              </div>
+              <button
+                @click="handleComplete"
+                class="inline-flex items-center gap-1.5 bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors shrink-0"
+              >
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                完了にする
+              </button>
+            </div>
+          </div>
+          <div v-else-if="currentTask.is_complete" class="flex-1 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded-xl p-3.5">
+            <p class="text-sm text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5 font-medium">
               <svg class="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              最終ステータスです
+              完了済み
             </p>
           </div>
         </div>
