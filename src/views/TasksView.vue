@@ -28,16 +28,21 @@ async function loadAllStatuses() {
   allStatuses.value = await db.select<Status[]>("SELECT * FROM statuses ORDER BY position");
 }
 
-// Inbox tasks (no task type)
-const inboxTasks = computed(() =>
-  tasks.value.filter((t) => t.task_type_id === null)
+// 完了タスク
+const completedTasks = computed(() =>
+  tasks.value.filter((t) => t.is_complete === 1)
 );
 
-// Tasks grouped by task type
+// Inbox tasks (no task type, not completed)
+const inboxTasks = computed(() =>
+  tasks.value.filter((t) => t.task_type_id === null && t.is_complete !== 1)
+);
+
+// Tasks grouped by task type (not completed)
 const groupedTasks = computed(() =>
   taskTypes.value.map((tt) => ({
     type: tt,
-    tasks: tasks.value.filter((t) => t.task_type_id === tt.id),
+    tasks: tasks.value.filter((t) => t.task_type_id === tt.id && t.is_complete !== 1),
   }))
 );
 
@@ -144,6 +149,27 @@ function closeModal() {
         <p v-else class="text-sm text-slate-400 pl-1">
           タスクがありません
         </p>
+      </section>
+
+      <!-- 完了セクション -->
+      <section v-if="completedTasks.length > 0">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="inline-block w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600"></span>
+          <h2 class="text-sm font-semibold text-slate-500 dark:text-slate-400">完了</h2>
+          <span class="text-xs font-medium text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-full">
+            {{ completedTasks.length }}
+          </span>
+        </div>
+        <div class="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+          <TaskCard
+            v-for="task in completedTasks"
+            :key="task.id"
+            :task="task"
+            :taskTypes="taskTypes"
+            :statuses="allStatuses"
+            @select="openDetail"
+          />
+        </div>
       </section>
     </div>
 

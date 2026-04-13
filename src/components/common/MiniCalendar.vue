@@ -1,18 +1,32 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, onMounted, onUnmounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 
 const router = useRouter();
 const route = useRoute();
 
-const today = toDateStr(new Date());
+const today = ref(toDateStr(new Date()));
+
+function onVisibilityChange() {
+  if (document.visibilityState === "visible") {
+    today.value = toDateStr(new Date());
+  }
+}
+
+onMounted(() => {
+  document.addEventListener("visibilitychange", onVisibilityChange);
+});
+
+onUnmounted(() => {
+  document.removeEventListener("visibilitychange", onVisibilityChange);
+});
 
 const viewYear = ref(new Date().getFullYear());
 const viewMonth = ref(new Date().getMonth());
 
 const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
 
-const selectedDate = computed(() => (route.path === "/" ? (route.query.date as string) || today : null));
+const selectedDate = computed(() => (route.path === "/" ? (route.query.date as string) || today.value : null));
 
 const calendarDays = computed(() => {
   const firstDay = new Date(viewYear.value, viewMonth.value, 1).getDay();
@@ -57,7 +71,7 @@ function nextMonth() {
 }
 
 function selectDate(date: string) {
-  if (date === today) router.push("/");
+  if (date === today.value) router.push("/");
   else router.push({ path: "/", query: { date } });
 }
 </script>

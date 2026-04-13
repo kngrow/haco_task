@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from "vue";
+import { ref, computed, watch, onMounted, onUnmounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useTodayTasks } from "../composables/useTodayTasks";
 import { useTasks } from "../composables/useTasks";
@@ -84,7 +84,21 @@ watch(selectedDate, (date) => {
   else router.replace({ query: { date } });
 });
 
-onMounted(() => fetchAll(selectedDate.value));
+onMounted(() => {
+  fetchAll(selectedDate.value);
+  document.addEventListener("visibilitychange", onVisibilityChange);
+});
+
+onUnmounted(() => {
+  document.removeEventListener("visibilitychange", onVisibilityChange);
+});
+
+function onVisibilityChange() {
+  if (document.visibilityState === "visible") {
+    refreshToday();
+    fetchAll(selectedDate.value);
+  }
+}
 
 // --- タスク詳細・編集 ---
 
