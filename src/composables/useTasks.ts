@@ -94,34 +94,10 @@ export function useTasks() {
       );
     }
     // 現在のステータスを更新
+    // 最終ステータスに到達しても自動完了はしない。タスクはそのステータスで
+    // 「進行中（未完了）」のまま残り、開始日・期日リストにも表示される。
+    // 完了はユーザーが明示的にチェック（completeTask）したときのみ。
     await db.execute("UPDATE tasks SET current_status_id = $1 WHERE id = $2", [nextStatusId, taskId]);
-
-    // 最終ステータスなら自動的に completed_at をセット（= タスク完了）
-    const hasNext = await db.select<{ cnt: number }[]>(
-      `SELECT COUNT(*) AS cnt FROM statuses
-       WHERE task_type_id = (SELECT task_type_id FROM statuses WHERE id = $1)
-         AND position > (SELECT position FROM statuses WHERE id = $1)`,
-      [nextStatusId]
-    );
-    if (hasNext[0]?.cnt === 0) {
-      const existing = await db.select<{ id: number }[]>(
-        "SELECT id FROM task_status_dates WHERE task_id = $1 AND status_id = $2",
-        [taskId, nextStatusId]
-      );
-      if (existing.length > 0) {
-        await db.execute(
-          "UPDATE task_status_dates SET completed_at = DATE('now') WHERE task_id = $1 AND status_id = $2",
-          [taskId, nextStatusId]
-        );
-      } else {
-        await db.execute(
-          "INSERT INTO task_status_dates (task_id, status_id, completed_at) VALUES ($1, $2, DATE('now'))",
-          [taskId, nextStatusId]
-        );
-      }
-      // 最終ステータス到達 = タスク完了
-      await db.execute("UPDATE tasks SET is_complete = 1 WHERE id = $1", [taskId]);
-    }
   }
 
   async function completeTask(taskId: number) {
