@@ -117,7 +117,7 @@ export function useTodayTasks() {
        WHERE t.is_complete = 1
          AND (
            SELECT MAX(tsd3.completed_at) FROM task_status_dates tsd3 WHERE tsd3.task_id = t.id
-         ) <= $1
+         ) = $1
        ORDER BY (
          SELECT MAX(tsd4.completed_at) FROM task_status_dates tsd4 WHERE tsd4.task_id = t.id
        ) DESC`,

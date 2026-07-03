@@ -119,6 +119,8 @@ export function useTasks() {
           [taskId, nextStatusId]
         );
       }
+      // 最終ステータス到達 = タスク完了
+      await db.execute("UPDATE tasks SET is_complete = 1 WHERE id = $1", [taskId]);
     }
   }
 
